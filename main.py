@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import Dict
+from datetime import datetime
+from pathlib import Path
+import json
 import numpy as np
 from deap import tools
 import core
@@ -12,7 +15,7 @@ def build_config() -> Dict:
         "genome": {"bounds": [0.0, 1.0]},
         "fitness": {"alpha": 0.1, "beta": 0.45, "gamma": 0.45},
         "ga": {
-            "population_size": 80,
+            "population_size": 512,
             "max_generations": 200,
             "cxpb": 0.9,
             "mutpb": 0.2,
@@ -24,7 +27,7 @@ def build_config() -> Dict:
                 "mutation": {"type": "gaussian", "mu": 0.0, "sigma": 0.08, "indpb": 0.1},
             },
         },
-        "output": {"save_best_image": True, "path": "best_image.png"},
+        "output": {"save_best_image": True, "base_dir": "pruebas"},
     }
     
 def main(config: Dict | None = None) -> None:
@@ -83,11 +86,23 @@ def main(config: Dict | None = None) -> None:
     
     # 7) Guardar mejor imagen
     if cfg["output"]["save_best_image"]:
-        img_best = task.decode(best, spec) # best es un individuo (lista de genes); decode acepta list[float]
-        # Des-normalizar a [0, 255]
-        img_u8 = np.clip(img_best * 255.0, 0, 255).astype(np.uint8)
-        Image.fromarray(img_u8).save(cfg["output"]["path"])
-        print(f"Mejor imagen guardada en: {cfg['output']['path']}")
+        img_best = task.decode(best, spec)  # best es un individuo (lista de genes); decode acepta list[float]
+        img_u8 = np.clip(img_best * 255.0, 0, 255).astype(np.uint8)  # Des-normalizar a [0, 255]
+
+        base_dir = Path(cfg["output"].get("base_dir", "pruebas"))
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        output_dir = base_dir / timestamp
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        image_path = output_dir / "best_image.png"
+        Image.fromarray(img_u8).save(image_path)
+
+        config_path = output_dir / "config.json"
+        with config_path.open("w", encoding="utf-8") as fp:
+            json.dump(cfg, fp, indent=2)
+
+        print(f"Mejor imagen guardada en: {image_path}")
+        print(f"Configuración registrada en: {config_path}")
         
         
 if __name__ == "__main__":

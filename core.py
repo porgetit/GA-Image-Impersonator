@@ -11,7 +11,7 @@ def _ensure_creators():
     """
     Crea tipo de deap si no existen aún.
     """
-    if not hasattr(creator, "FitnessMin"):
+    if not hasattr(creator, "FitnessMax"):
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
     if not hasattr(creator, "Individual"):
         creator.create("Individual", list, fitness=creator.FitnessMax)
@@ -131,7 +131,7 @@ def evolve(
     
     # TODO (opcional): personalizar el bucle en lugar de eaSimple si se requiere más control
     pop, logbook = algorithms.eaSimple(
-        popuplation=pop,
+        population=pop,
         toolbox=toolbox,
         cxpb=cxpb,
         mutpb=mutpb,

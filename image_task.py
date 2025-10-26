@@ -17,7 +17,9 @@ def load_image(
     """
     img = Image.open(path).convert("RGB")
     if to_shape is not None:
-        w, h = to_shape[1], to_shape[0] # PIL usa (W, H)
+        w = to_shape[1]  # Nuevo ancho
+        orig_w, orig_h = img.size
+        h = int(orig_h * (w / orig_w))  # Calcula el alto proporcional
         img = img.resize((w, h), Image.BICUBIC)
     arr = np.asarray(img, dtype=np.float32)
     if normalize:
