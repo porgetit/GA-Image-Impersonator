@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict
+from typing import Dict, Any
 from datetime import datetime
 from pathlib import Path
 import json
@@ -11,14 +11,14 @@ from PIL import Image
 
 def build_config() -> Dict:
     return {
-        "image": {"path": "target.png", "rezise_to": [64, 64], "normalize": True},
+        "image": {"path": "target", "rezise_to": [64,], "normalize": True},
         "genome": {"bounds": [0.0, 1.0]},
         "fitness": {"alpha": 0.1, "beta": 0.45, "gamma": 0.45},
         "ga": {
-            "population_size": 512,
-            "max_generations": 200,
-            "cxpb": 0.9,
-            "mutpb": 0.2,
+            "population_size": 64*4,
+            "max_generations": 700,
+            "cxpb": 0.8,
+            "mutpb": 0.3,
             "hof_k": 1,
             "seed": 42,
             "cfg_ops": {
@@ -29,6 +29,42 @@ def build_config() -> Dict:
         },
         "output": {"save_best_image": True, "base_dir": "pruebas"},
     }
+
+
+def _resolve_image_path(base_name: str) -> str:
+    """
+    Resuelve una ruta de imagen admitiendo tanto nombres completos como nombres base sin extensión.
+    Busca en el orden: ruta literal, .png, .jpg, .jpeg (en minúsculas).
+    """
+    candidate = Path(base_name)
+
+    if candidate.exists():
+        return str(candidate)
+
+    if candidate.suffix:
+        raise FileNotFoundError(f"No se encontró la imagen en la ruta especificada: {candidate}")
+
+    for ext in (".png", ".jpg", ".jpeg"):
+        with_ext = candidate.with_suffix(ext)
+        if with_ext.exists():
+            return str(with_ext)
+
+    raise FileNotFoundError(
+        f"No se encontró ninguna imagen para '{base_name}' con extensiones .png, .jpg o .jpeg"
+    )
+
+
+def _to_serializable(value: Any) -> Any:
+    """
+    Convierte objetos de numpy a tipos compatibles con JSON.
+    """
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, (list, tuple)):
+        return [_to_serializable(v) for v in value]
+    return value
     
 def main(config: Dict | None = None) -> None:
     cfg = config or build_config()
@@ -38,8 +74,11 @@ def main(config: Dict | None = None) -> None:
     np.random.default_rng(seed)
     
     # 1) Cargar imagen objetivo
+    image_path = _resolve_image_path(cfg["image"]["path"])
+    cfg["image"]["path"] = image_path
+
     I = task.load_image(
-        path=cfg["image"]["path"],
+        path=image_path,
         to_shape=tuple(cfg["image"]["rezise_to"]) if cfg["image"]["rezise_to"] else None,
         normalize=cfg["image"]["normalize"]
     )
@@ -101,8 +140,32 @@ def main(config: Dict | None = None) -> None:
         with config_path.open("w", encoding="utf-8") as fp:
             json.dump(cfg, fp, indent=2)
 
+        stats_path = output_dir / "stats.json"
+        log_records = [
+            {k: _to_serializable(v) for k, v in record.items()}
+            for record in logbook
+        ]
+
+        best_mu_global, best_mu_rows, best_mu_cols = task._candidate_stats(img_best)
+        stats_payload = {
+            "generations": log_records,
+            "best": {
+                "fitness": _to_serializable(best.fitness.values[0]),
+                "generation": log_records[-1]["gen"] if log_records else None,
+                "statistics": {
+                    "mu_global": _to_serializable(best_mu_global),
+                    "mu_rows": _to_serializable(best_mu_rows),
+                    "mu_cols": _to_serializable(best_mu_cols),
+                },
+            },
+        }
+
+        with stats_path.open("w", encoding="utf-8") as fp:
+            json.dump(stats_payload, fp, indent=2)
+
         print(f"Mejor imagen guardada en: {image_path}")
         print(f"Configuración registrada en: {config_path}")
+        print(f"Estadísticas guardadas en: {stats_path}")
         
         
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from PIL import Image
 # Carga y preprocesamiento
 def load_image(
     path: str,
-    to_shape: Tuple[int, int] | None = None,
+    to_shape: Tuple[int, int] | Tuple[int,] | None = None,
     normalize: bool = True
 ) -> np.ndarray:
     """
@@ -17,10 +17,16 @@ def load_image(
     """
     img = Image.open(path).convert("RGB")
     if to_shape is not None:
-        w = to_shape[1]  # Nuevo ancho
-        orig_w, orig_h = img.size
-        h = int(orig_h * (w / orig_w))  # Calcula el alto proporcional
-        img = img.resize((w, h), Image.BICUBIC)
+        if len(to_shape) == 2:
+            # Si hay dos valores, redimensionar a ambos sin mantener ratio
+            w, h = to_shape[0], to_shape[1]
+            img = img.resize((w, h), Image.BICUBIC)
+        else:
+            # Si hay un valor, usar como ancho y calcular alto proporcional
+            w = to_shape[0]
+            orig_w, orig_h = img.size
+            h = int(orig_h * (w / orig_w))
+            img = img.resize((w, h), Image.BICUBIC)
     arr = np.asarray(img, dtype=np.float32)
     if normalize:
         arr /= 255.0

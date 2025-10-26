@@ -1,0 +1,48 @@
+{
+  "image": {
+    "path": "target.jpg",
+    "rezise_to": [
+      64
+    ],
+    "normalize": true
+  },
+  "genome": {
+    "bounds": [
+      0.0,
+      1.0
+    ]
+  },
+  "fitness": {
+    "alpha": 0.1,
+    "beta": 0.45,
+    "gamma": 0.45
+  },
+  "ga": {
+    "population_size": 320,
+    "max_generations": 100,
+    "cxpb": 0.9,
+    "mutpb": 0.2,
+    "hof_k": 1,
+    "seed": 42,
+    "cfg_ops": {
+      "selection": {
+        "type": "tournament",
+        "k": 3
+      },
+      "crossover": {
+        "type": "uniform",
+        "indpb": 0.5
+      },
+      "mutation": {
+        "type": "gaussian",
+        "mu": 0.0,
+        "sigma": 0.08,
+        "indpb": 0.1
+      }
+    }
+  },
+  "output": {
+    "save_best_image": true,
+    "base_dir": "pruebas"
+  }
+}
