@@ -11,20 +11,20 @@ from PIL import Image
 
 def build_config() -> Dict:
     return {
-        "image": {"path": "target", "rezise_to": [64,], "normalize": True},
+        "image": {"path": "target", "rezise_to": [192,], "normalize": True},
         "genome": {"bounds": [0.0, 1.0]},
         "fitness": {"alpha": 0.1, "beta": 0.45, "gamma": 0.45},
         "ga": {
-            "population_size": 64*4,
+            "population_size": 56,
             "max_generations": 700,
             "cxpb": 0.8,
             "mutpb": 0.3,
             "hof_k": 1,
             "seed": 42,
             "cfg_ops": {
-                "selection": {"type": "tournament", "k": 3},
+                "selection": {"type": "tournament", "k": 4},
                 "crossover": {"type": "uniform", "indpb": 0.5},
-                "mutation": {"type": "gaussian", "mu": 0.0, "sigma": 0.08, "indpb": 0.1},
+                "mutation": {"type": "gaussian", "mu": 0.01, "sigma": 0.08, "indpb": 0.1},
             },
         },
         "output": {"save_best_image": True, "base_dir": "pruebas"},

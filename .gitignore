@@ -148,15 +148,15 @@ Desktop.ini
 *.env.*
 
 # Images
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.bmp
-*.tiff
-*.svg
-*.ico
-*.webp
+# *.png
+# *.jpg
+# *.jpeg
+# *.gif
+# *.bmp
+# *.tiff
+# *.svg
+# *.ico
+# *.webp
 
 # Pruebas
 # /pruebas/
